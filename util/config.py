@@ -29,7 +29,7 @@ class Config(object):
         self.dorm = {'enabled': False}
         self.academy = {'enabled': False}
         self.events = {'enabled': False}
-        self.network = {}
+        self.adb = {}
         self.assets = {}
         self.read()
 
@@ -37,7 +37,7 @@ class Config(object):
         backup_config = deepcopy(self.__dict__)
         config = configparser.ConfigParser()
         config.read(self.config_file)
-        self.network['service'] = config.get('Network', 'Service')
+        self.adb['serial'] = config.get('ADB', 'Serial')
         self.assets['server'] = config.get('Assets', 'Server')
 
         if config.getboolean('Updates', 'Enabled'):

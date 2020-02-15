@@ -2,46 +2,34 @@ import subprocess
 from util.logger import Logger
 
 class Adb(object):
-
+    serial = ''
     legacy = False
-    service = ''
-    device = ''
-
-    def init(self):
-        """Kills and starts a new ADB server
+    
+    @staticmethod
+    def init(config, legacyArg=False):
+        """Initialize class fields
         """
-        self.kill_server()
-        return self.start_server()
+        Adb.serial = config.adb['serial']
+        Adb.legacy = legacyArg
 
-    def enable_legacy(self):
-        """Method to enable legacy adb usage.
-        """
-        self.legacy = True
-        return
-
-    def start_server(self):
-        """
-        Starts the ADB server and makes sure the android device (emulator) is attached.
+    @staticmethod
+    def check_state():
+        """Method that checks if the device is attached and ready to be used.
 
         Returns:
             (boolean): True if everything is ready, False otherwise.
         """
+        cmd = ['adb', '-s', Adb.serial, 'get-state']
+        process = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        state = process.communicate()[0].decode()
+        return state.find('device') == 0
+
+    @staticmethod
+    def start_server():
+        """Starts the ADB server
+        """
         cmd = ['adb', 'start-server']
         subprocess.call(cmd)
-        #checking the emulator state
-        cmd = ['adb', self.device, 'get-state']
-        process = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        #processing only the std_out data, if there is an error it will be sent to std_err,
-        #so if the get-state fails ('error: no emulators found') => state=''
-        state = process.communicate()[0].decode()
-        if state.find('device') == -1:
-            #the emulator is not attached, trying to connect using service info
-            cmd = ['adb', 'connect', self.service]
-            process = subprocess.Popen(cmd, stdout = subprocess.PIPE)
-            std_out = process.communicate()[0].decode()
-            return std_out.find('connected') == 0
-        else:
-            return True
 
     @staticmethod
     def kill_server():
@@ -60,7 +48,7 @@ class Adb(object):
         Returns:
             tuple: A tuple containing stdoutdata and stderrdata
         """
-        cmd = ['adb', Adb.device, 'exec-out'] + args.split(' ')
+        cmd = ['adb', '-s', Adb.serial, 'exec-out'] + args.split(' ')
         process = subprocess.Popen(cmd, stdout = subprocess.PIPE)
         return process.communicate()[0]
 
@@ -71,6 +59,6 @@ class Adb(object):
         Args:
             args (string): Command to execute.
         """
-        cmd = ['adb', Adb.device, 'shell'] + args.split(' ')
+        cmd = ['adb', '-s', Adb.serial, 'shell'] + args.split(' ')
         Logger.log_debug(str(cmd))
         subprocess.call(cmd)

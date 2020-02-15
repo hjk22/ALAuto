@@ -177,16 +177,14 @@ if args:
         Logger.enable_debugging(Logger)
     if args.legacy:
         Logger.log_info("Enabled sed usage.")
-        Adb.enable_legacy(Adb)
 
 script = ALAuto(config)
 script.run_update_check()
 
-Adb.service = config.network['service']
-Adb.device = '-d' if (Adb.service == 'PHONE') else '-e'
 adb = Adb()
+adb.init(config, args.legacy)
 
-if adb.init():
+if adb.check_state():
     Logger.log_msg('Successfully connected to the service.')
     output = Adb.exec_out('wm size').decode('utf-8').strip()
 
